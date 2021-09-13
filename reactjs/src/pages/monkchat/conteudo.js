@@ -28,6 +28,7 @@ export default function Conteudo() {
     const navigation = useHistory();
     let usuariologado =  lerUsuarioLogado(navigation);
 
+    const [idAlterando,setIdAlterando] = useState(0);
     const [chat, setChat] = useState([]);
     const [sala, setSala] = useState('');
     const [usu, setUsu] = useState(usuariologado.nm_usuario);
@@ -59,13 +60,28 @@ export default function Conteudo() {
         if(event.type === "keypress" && (!event.ctrlKey || event.charCode == 13 ))
         return;
 
+        if(idAlterando > 0){
+
+            const resp = await api.alterarMensagem(idAlterando,msg);
+            if (!validarResposta(resp)) 
+            return;
+
+            toast.dark('💕 Mensagem alterada com sucesso!')
+            setIdAlterando(0);
+            setMsg('');
+            await carregarMensagens();
+        } else{
+        
+
         const resp = await api.inserirMensagem(sala, usu, msg);
         if (!validarResposta(resp)) 
             return;
         
         toast.dark('💕 Mensagem enviada com sucesso!');
         await carregarMensagens();
+        
     }
+}
 
     const inserirUsuario = async () => {
         const resp = await api.inserirUsuario(usu);
@@ -94,6 +110,15 @@ export default function Conteudo() {
   await carregarMensagens();
 
     }
+
+
+    const editar = async (item) =>{
+        setMsg(item.ds_mensagem);
+        setIdAlterando(item.id_chat);
+    }
+
+
+
     
     return (
         <ContainerConteudo>
@@ -131,6 +156,7 @@ export default function Conteudo() {
                     {chat.map(x =>
                         <div key={x.id_chat}>
                             <div className="chat-message">
+                                <div> <img onClick={() => editar(x)}   src="/assets/images/check.svg" style={{cursor:"pointer"}}/></div>
                                 <div> <img onClick={ () => remover(x.id_chat)} src="/assets/images/lixeira.svg" alt="" style={{cursor:"pointer"}}/></div>
                                 <div>({new Date(x.dt_mensagem.replace('Z', '')).toLocaleTimeString()})</div>
                                 <div><b>{x.tb_usuario.nm_usuario}</b> fala para <b>Todos</b>:</div>
